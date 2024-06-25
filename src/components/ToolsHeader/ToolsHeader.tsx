@@ -1,11 +1,11 @@
-import React from 'react'
 
-import { AddNode } from '../node'
+import { AddNode, RemoveNode } from '../node'
 
 export function ToolsHeader() {
   return (
-    <div className='header'>
+    <div className='header tools-container'>
       <AddNode />
+      <RemoveNode />
     </div>
   )
 }

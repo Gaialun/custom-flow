@@ -1,3 +1,7 @@
-.header {
-  width: 100%;
+.header {}
+
+.tools-container {
+  display: flex;
+  column-gap: 16px;
+  margin: 8px 16px;
 }

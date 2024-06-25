@@ -1,20 +1,50 @@
 import type { ReactNode } from "react"
-import type { StoreApi, UseBoundStore } from "zustand"
-import type { GlobalStore } from "./global"
+import type { Edge, OnEdgesChange } from "reactflow"
+import type { INodeStyle, NodesHookReturn } from "../components"
 
 import { createContext, useContext, useState } from "react"
+import { useEdgesState } from "reactflow"
 
-import { createStore } from "./global"
+import { type INode, nodeDefaultStyle, useNodes } from "../components"
 
 type Context = {
-  store: UseBoundStore<StoreApi<GlobalStore>>
-}
+  nodes: INode[]
+  edges: Edge[]
+  nodeStyle: INodeStyle
+  setNodeStyle: (style: INodeStyle) => void
+  addNode: () => void
+  onEdgesChange: OnEdgesChange
+} & Omit<NodesHookReturn, "selectedNodeStyle" | "setSelectedNodeStyle" | "addNode">
 const context = createContext({} as Context)
 
 export function FlowContextProvider({ children }: { children: ReactNode }) {
-  const [store] = useState<Context['store']>(createStore)
+  const nodeOptions = useNodes()
+  const [defaultNodeStyle, setDefaultNodeStyle] = useState<INodeStyle>(nodeDefaultStyle)
+  const [edges, setEdges, onEdgesChange] = useEdgesState([])
 
-  return <context.Provider value={{ store }}>{children}</context.Provider>
+  const addNode = () => {
+    nodeOptions.addNode(defaultNodeStyle)
+  }
+
+  const setNodeStyle = (nodeStyle: INodeStyle) => {
+    if (nodeOptions.focusNode) {
+      nodeOptions.setSelectedNodeStyle(nodeStyle)
+    } else {
+      setDefaultNodeStyle(nodeStyle)
+    }
+  }
+
+
+  return <context.Provider value={{
+    nodeStyle: nodeOptions.selectedNodeStyle ?? defaultNodeStyle,
+    ...nodeOptions,
+    addNode,
+    setNodeStyle,
+    edges,
+    onEdgesChange
+  }}>
+    {children}
+  </context.Provider>
 }
 
 

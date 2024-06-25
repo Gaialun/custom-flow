@@ -1,50 +1,38 @@
-import { useMemo } from 'react'
 import ReactFlow, { Controls, MiniMap } from 'reactflow'
 
-import { Node, ToolsHeader } from '../components'
+import { DefaultNode, NodeOptions } from '../components'
 import { useFlowStore } from '../store'
 
-export function Flow() {
-  return (
-    <>
-      <ToolsHeader />
-      <FlowChart />
-    </>
-  )
+
+const nodeTypes = {
+  defaultNode: DefaultNode
 }
 
-function FlowChart() {
-  const { nodes, edges } = useFlowStore().store(({ nodes, edges }) => ({ nodes, edges }))
-  console.log(nodes)
-  const entities = useMemo(() => {
-    return {
-      nodeTypes: {
-        // defaultNode: Node
-      },
-      edgeTypes: {
+const defaultViewport = {
+  x: 0,
+  y: 0,
+  zoom: 0.6
+}
 
-      }
-    }
-  }, [])
-
+export function Flow() {
+  const { nodes, edges, onNodesChange, onEdgesChange } = useFlowStore()
 
   return (
     <ReactFlow
       nodes={nodes}
       edges={edges}
-      {...entities}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
       proOptions={{ hideAttribution: true }}
-      defaultViewport={{
-        x: -200,
-        y: 0,
-        zoom: 0.6
-      }}
+      defaultViewport={defaultViewport}
+      nodeTypes={nodeTypes}
       minZoom={0.1}
       fitView
       attributionPosition='bottom-left'
     >
-      <MiniMap />
       <Controls />
+      <MiniMap />
+      <NodeOptions />
     </ReactFlow>
   )
 }

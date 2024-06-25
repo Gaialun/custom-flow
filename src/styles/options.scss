@@ -1,0 +1,25 @@
+.options-container {
+  width: 200px;
+  height: calc(100% - 200px);
+  position: fixed;
+  top: 0;
+  right: 0;
+  background-color: #f9f9f9;
+  padding: 10px;
+  z-index: 10;
+}
+
+
+.options-title {
+  font-size: 16px;
+}
+
+.options-item {
+  display: flex;
+  align-items: center;
+  margin: 8px 0;
+
+  &>:not(label) {
+    flex: 1
+  }
+}

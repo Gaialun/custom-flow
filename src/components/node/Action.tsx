@@ -35,14 +35,14 @@ export function ClearAllNodes() {
 }
 
 export function NodeOptions() {
-  const { nodeStyle: defaultStyle, setNodeStyle, setNodesStyle } = useFlowStore()
-  const { nodeStyleOptions, setNodeStyleOptions } = useNodeOptions(defaultStyle)
+  const { nodeStyle: defaultStyle, nodeStyleType, setNodeStyle, setNodesStyle } = useFlowStore()
+  const { nodeStyleOptions, setNodeStyleOptions } = useNodeOptions(defaultStyle, nodeStyleType)
   const { width, height, label, border, padding, backgroundColor } = nodeStyleOptions
 
   const handleChange = (options: UpdateNodeOptionsParams) => {
     setNodeStyle(setNodeStyleOptions(options))
   }
-  console.log(label.fontStyle)
+
   return (
     <div className="options-container">
       <b className="options-title">外观</b>
@@ -139,7 +139,7 @@ export function NodeOptions() {
       </div>
       <Divider />
       <Button onClick={() => {
-        console.log(defaultStyle)
+        console.log(defaultStyle, nodeStyleType)
 
         setNodesStyle(defaultStyle)
       }}>应用于全部节点</Button>

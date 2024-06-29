@@ -2,6 +2,11 @@ import type { INodeStyle } from "./type"
 
 export const NODE_DRAG_HANDLE_CLASS = "node-drag-handle"
 
+export enum NodeOptionsType {
+  GLOBAL = "global",
+  SINGLE = "single"
+}
+
 export const nodeDefaultStyle: INodeStyle = Object.freeze({
   width: 140,
   height: 20,
@@ -14,5 +19,4 @@ export const nodeDefaultStyle: INodeStyle = Object.freeze({
   display: "inline-block",
   backgroundColor: "#ffffff",
   padding: 0
-}
-)
+})

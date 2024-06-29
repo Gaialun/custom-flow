@@ -1,4 +1,5 @@
 import type { OnNodesChange } from "reactflow"
+import type { NodeOptionsType } from "./constants"
 import type { INode, INodeData, INodeOptions, INodeStyle } from "./type"
 
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react"
@@ -102,17 +103,17 @@ export type UpdateNodeOptionsParams = Partial<{
   border: Partial<INodeOptions['border']>
   label: Partial<INodeOptions['label']>
 } & Omit<INodeOptions, "border" | "label">>
-export function useNodeOptions(defaultStyle: INodeStyle) {
+export function useNodeOptions(defaultStyle: INodeStyle, type: NodeOptionsType) {
   const [nodeStyleOptions, setNodeStyleOptions, reset] = useImmerState<INodeOptions>(() => nodeStyle2Options(defaultStyle))
 
   useLayoutEffect(() => {
+    console.log(defaultStyle)
     reset(nodeStyle2Options(defaultStyle))
-  }, [defaultStyle])
+  }, [type])
 
   return {
     nodeStyleOptions,
     setNodeStyleOptions(nodeOptions: UpdateNodeOptionsParams) {
-      console.log(nodeOptions)
       return nodeOptions2Style(setNodeStyleOptions((state) => {
         merge(state, nodeOptions)
       }))

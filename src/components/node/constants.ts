@@ -6,12 +6,13 @@ export const nodeDefaultStyle: INodeStyle = Object.freeze({
   width: 140,
   height: 20,
   fontSize: 14,
-  color: "#000",
-  borderRadius: "4px",
+  color: "#000000",
+  borderRadius: 0,
   borderStyle: "solid",
   borderColor: "#e5e7eb",
   borderWidth: 1,
   display: "inline-block",
-  background: "#fff",
+  backgroundColor: "#ffffff",
+  padding: 0
 }
 )

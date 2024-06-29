@@ -1,10 +1,13 @@
 import type { OnNodesChange } from "reactflow"
-import type { INode, INodeOptions, INodeStyle, NodeData } from "./type"
+import type { INode, INodeData, INodeOptions, INodeStyle } from "./type"
 
-import { useCallback, useLayoutEffect, useMemo, useState } from "react"
-import { useNodesState, useOnSelectionChange } from "reactflow"
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { useNodesState, useOnSelectionChange, useStoreApi } from "reactflow"
+import { merge } from "lodash"
 
-import { useObjectState } from "../../hooks"
+import { nodeOptions2Style, nodeStyle2Options } from "/@/utils/styles"
+
+import { useImmerState } from "../../hooks"
 import { NODE_DRAG_HANDLE_CLASS } from "./constants"
 
 
@@ -14,23 +17,24 @@ export type NodesHookReturn = {
   selectedNodes: Map<string, INode>
   selectedNodeStyle: INodeStyle | undefined
   setSelectedNodeStyle: (nodeStyle: INodeStyle) => void
+  setNodesStyle: (nodeStyle: INodeStyle) => void
   onNodesChange: OnNodesChange
   addNode: (defaultNode: INodeStyle) => void
   removeSelectedNode: () => void
+  clearAllNodes: () => void
 }
 export function useNodes(): NodesHookReturn {
-  const [nodes, setNodes, onNodesChange] = useNodesState<NodeData>([])
-  const nodesMap = useMemo(() => {
-    return new Map(nodes.map((node) => [node.id, node]))
-  }, [nodes.length])
+  const [nodes, setNodes, onNodesChange] = useNodesState<INodeData>([])
+  const autoId = useRef(0)
   const [selectedNodes, setSelectedNodes] = useState<Map<string, INode>>(new Map())
+  const store = useStoreApi()
   const addNode = useCallback((style: INodeStyle) => {
     setNodes((prevNodes) => {
-      const nodeId = `node-${prevNodes.length + 1}`
+      const nodeId = `node-${++autoId.current}`
       const newNode: INode = {
         id: nodeId,
         type: "defaultNode",
-        position: { x: 0, y: 50 },
+        position: { x: -500, y: -250 },
         dragHandle: `.${NODE_DRAG_HANDLE_CLASS}`,
         data: { text: `Node-${nodeId}`, index: prevNodes.length, style },
       }
@@ -39,26 +43,45 @@ export function useNodes(): NodesHookReturn {
   }, [])
 
   useOnSelectionChange({
-    onChange({ nodes: selectedNodes }) {
-      if (!selectedNodes.length) setSelectedNodes(new Map())
-      else setSelectedNodes(new Map(selectedNodes.map(({ id }) => [id, nodesMap.get(id)!])))
+    onChange({ nodes }) {
+      setSelectedNodes(new Map(nodes.filter(({ selected }) => selected).map((node) => [node.id, node])))
     }
   })
-
   const removeSelectedNode = useCallback(() => {
-    setNodes((prevNodes) => prevNodes.filter(({ id }) => !selectedNodes.has(id)))
+    setNodes((prevNodes) => {
+      const newNodes = prevNodes.filter(({ id }) => !selectedNodes.has(id))
+      if (!newNodes.length) autoId.current = 0
+      return newNodes
+    })
     setSelectedNodes(new Map())
   }, [selectedNodes])
 
-  const focusNode = useMemo(() => [...selectedNodes.values()].pop(), [selectedNodes])
+  const clearAllNodes = useCallback(() => {
+    setNodes([])
+    setSelectedNodes(new Map())
+    autoId.current = 0
+  }, [])
+
+  const focusNode = useMemo(() => {
+    const nodeId = [...selectedNodes.values()].pop()?.id
+    return nodeId ? store.getState().nodeInternals.get(nodeId) : undefined
+  }, [selectedNodes, nodes])
 
   const setSelectedNodeStyle = (nodeStyle: INodeStyle) => {
     if (!selectedNodes.size) return
-    const currentNodes = [...selectedNodes.values()]
-    currentNodes.forEach((node) => {
-      node.data.style = nodeStyle
-    })
-    setNodes([...nodes])
+    setNodes(nodes.map((node) => {
+      if (selectedNodes.has(node.id)) {
+        node.data = { ...node.data, style: { ...nodeStyle } }
+      }
+      return node
+    }))
+  }
+
+  const setNodesStyle = (nodeStyle: INodeStyle) => {
+    setNodes(nodes.map((node) => {
+      node.data = { ...node.data, style: { ...nodeStyle } }
+      return node
+    }))
   }
 
   return {
@@ -69,70 +92,30 @@ export function useNodes(): NodesHookReturn {
     addNode,
     removeSelectedNode,
     onNodesChange,
-    setSelectedNodeStyle
+    setSelectedNodeStyle,
+    setNodesStyle,
+    clearAllNodes
   }
 }
 
-export function useNodeStyle(defaultStyle: INodeStyle) {
-  const [labelOptions, setLabelOptions] = useObjectState<INodeOptions['label']>({
-    color: defaultStyle.color,
-    fontSize: defaultStyle.fontSize
-  })
-  const [borderOptions, setBorderOptions] = useObjectState<INodeOptions['border']>({
-    color: defaultStyle.borderColor,
-    width: defaultStyle.borderWidth,
-    style: defaultStyle.borderStyle,
-    radius: defaultStyle.borderRadius,
-  })
-
-  const [width, setWidth] = useState(140)
-  const [height, setHeight] = useState(40)
-
-  const getStyle = (options: Partial<INodeOptions>) => {
-    const _labelOptions = options.label ?? labelOptions
-    const _borderOptions = options.border ?? borderOptions
-    return {
-      width: options.width ?? width,
-      height: options.height ?? height,
-      fontSize: _labelOptions.fontSize,
-      color: _labelOptions.color,
-      borderWidth: _borderOptions.width,
-      borderColor: _borderOptions.color,
-      borderRadius: _borderOptions.radius,
-      borderStyle: "solid" as INodeStyle['borderStyle']
-    }
-  }
+export type UpdateNodeOptionsParams = Partial<{
+  border: Partial<INodeOptions['border']>
+  label: Partial<INodeOptions['label']>
+} & Omit<INodeOptions, "border" | "label">>
+export function useNodeOptions(defaultStyle: INodeStyle) {
+  const [nodeStyleOptions, setNodeStyleOptions, reset] = useImmerState<INodeOptions>(() => nodeStyle2Options(defaultStyle))
 
   useLayoutEffect(() => {
-    setWidth(defaultStyle.width)
-    setHeight(defaultStyle.height)
-    setLabelOptions({ color: defaultStyle.color, fontSize: defaultStyle.fontSize })
-    setBorderOptions({
-      color: defaultStyle.borderColor,
-      width: defaultStyle.borderWidth,
-      style: defaultStyle.borderStyle,
-      radius: defaultStyle.borderRadius
-    })
+    reset(nodeStyle2Options(defaultStyle))
   }, [defaultStyle])
 
   return {
-    width,
-    height,
-    labelOptions,
-    borderOptions,
-    setWidth(width: number) {
-      setWidth(width)
-      return getStyle({ width })
-    },
-    setHeight(height: number) {
-      setWidth(height)
-      return getStyle({ height })
-    },
-    setLabelOptions(labelOptions: Partial<INodeOptions["label"]>) {
-      return getStyle({ label: setLabelOptions(labelOptions) })
-    },
-    setBorderOptions(borderOptions: Partial<INodeOptions['border']>) {
-      return getStyle({ border: setBorderOptions(borderOptions) })
+    nodeStyleOptions,
+    setNodeStyleOptions(nodeOptions: UpdateNodeOptionsParams) {
+      console.log(nodeOptions)
+      return nodeOptions2Style(setNodeStyleOptions((state) => {
+        merge(state, nodeOptions)
+      }))
     }
   }
 }

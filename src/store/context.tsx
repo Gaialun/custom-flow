@@ -1,11 +1,10 @@
 import type { ReactNode } from "react"
 import type { Edge, OnEdgesChange } from "reactflow"
-import type { INodeStyle, NodesHookReturn } from "../components"
+import type { EdgesHookReturn, INodeStyle, NodesHookReturn } from "../components"
 
 import { createContext, useContext, useState } from "react"
-import { useEdgesState } from "reactflow"
 
-import { type INode, nodeDefaultStyle, useNodes } from "../components"
+import { type INode, nodeDefaultStyle, useEdges, useNodes } from "../components"
 
 type Context = {
   nodes: INode[]
@@ -14,13 +13,13 @@ type Context = {
   setNodeStyle: (style: INodeStyle) => void
   addNode: () => void
   onEdgesChange: OnEdgesChange
-} & Omit<NodesHookReturn, "selectedNodeStyle" | "setSelectedNodeStyle" | "addNode">
+} & Omit<NodesHookReturn, "selectedNodeStyle" | "setSelectedNodeStyle" | "addNode"> & EdgesHookReturn
 const context = createContext({} as Context)
 
 export function FlowContextProvider({ children }: { children: ReactNode }) {
   const nodeOptions = useNodes()
   const [defaultNodeStyle, setDefaultNodeStyle] = useState<INodeStyle>(nodeDefaultStyle)
-  const [edges, setEdges, onEdgesChange] = useEdgesState([])
+  const edgesOptions = useEdges()
 
   const addNode = () => {
     nodeOptions.addNode(defaultNodeStyle)
@@ -34,14 +33,12 @@ export function FlowContextProvider({ children }: { children: ReactNode }) {
     }
   }
 
-
   return <context.Provider value={{
     nodeStyle: nodeOptions.selectedNodeStyle ?? defaultNodeStyle,
     ...nodeOptions,
     addNode,
     setNodeStyle,
-    edges,
-    onEdgesChange
+    ...edgesOptions
   }}>
     {children}
   </context.Provider>

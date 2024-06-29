@@ -1,21 +1,25 @@
 import ReactFlow, { Controls, MiniMap } from 'reactflow'
 
-import { DefaultNode, NodeOptions } from '../components'
+import { DefaultEdge, DefaultNode, NodeOptions } from '../components'
 import { useFlowStore } from '../store'
 
 
 const nodeTypes = {
-  defaultNode: DefaultNode
+  defaultNode: DefaultNode,
+}
+
+const edgeTypes = {
+  defaultEdge: DefaultEdge
 }
 
 const defaultViewport = {
   x: 0,
   y: 0,
-  zoom: 0.6
+  zoom: 1
 }
 
 export function Flow() {
-  const { nodes, edges, onNodesChange, onEdgesChange } = useFlowStore()
+  const { nodes, edges, onNodesChange, onEdgesChange, addEdge } = useFlowStore()
 
   return (
     <ReactFlow
@@ -23,9 +27,11 @@ export function Flow() {
       edges={edges}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
+      onConnect={addEdge}
       proOptions={{ hideAttribution: true }}
       defaultViewport={defaultViewport}
       nodeTypes={nodeTypes}
+      edgeTypes={edgeTypes}
       minZoom={0.1}
       fitView
       attributionPosition='bottom-left'

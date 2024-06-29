@@ -5,3 +5,7 @@ export default function Action() {
     <div>Action</div>
   )
 }
+
+export function EdgeOptions() {
+
+}

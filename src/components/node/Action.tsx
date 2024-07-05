@@ -1,5 +1,6 @@
 import type { UpdateNodeOptionsParams } from './hook'
 
+import { useEffect } from 'react'
 import { BoldOutlined, ItalicOutlined, StrikethroughOutlined } from '@ant-design/icons'
 import { Button, ColorPicker, Divider, InputNumber } from 'antd'
 
@@ -35,14 +36,17 @@ export function ClearAllNodes() {
 }
 
 export function NodeOptions() {
-  const { nodeStyle: defaultStyle, nodeStyleType, setNodeStyle, setNodesStyle } = useFlowStore()
-  const { nodeStyleOptions, setNodeStyleOptions } = useNodeOptions(defaultStyle, nodeStyleType)
+  const { nodeStyle: defaultStyle, focusNode, setNodeStyle, setNodesStyle } = useFlowStore()
+  const { nodeStyleOptions, setNodeStyleOptions, reset } = useNodeOptions(defaultStyle)
   const { width, height, label, border, padding, backgroundColor } = nodeStyleOptions
 
   const handleChange = (options: UpdateNodeOptionsParams) => {
     setNodeStyle(setNodeStyleOptions(options))
   }
 
+  useEffect(() => {
+    reset()
+  }, [focusNode?.id])
   return (
     <div className="options-container">
       <b className="options-title">外观</b>
@@ -139,8 +143,6 @@ export function NodeOptions() {
       </div>
       <Divider />
       <Button onClick={() => {
-        console.log(defaultStyle, nodeStyleType)
-
         setNodesStyle(defaultStyle)
       }}>应用于全部节点</Button>
     </div>

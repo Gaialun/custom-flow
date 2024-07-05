@@ -34,6 +34,7 @@ export function Flow() {
       edgeTypes={edgeTypes}
       minZoom={0.1}
       fitView
+      multiSelectionKeyCode={"Control"}
       attributionPosition='bottom-left'
     >
       <Controls />

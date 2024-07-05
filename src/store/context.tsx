@@ -35,12 +35,18 @@ export function FlowContextProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const setNodesStyle = (nodeStyle: INodeStyle) => {
+    setDefaultNodeStyle(nodeStyle)
+    nodeOptions.setNodesStyle(nodeStyle)
+  }
+
   return <context.Provider value={{
     nodeStyle: nodeOptions.selectedNodeStyle ?? defaultNodeStyle,
     ...nodeOptions,
     nodeStyleType: nodeOptions.selectedNodes.size ? NodeOptionsType.GLOBAL : NodeOptionsType.SINGLE,
     addNode,
     setNodeStyle,
+    setNodesStyle,
     ...edgesOptions
   }}>
     {children}

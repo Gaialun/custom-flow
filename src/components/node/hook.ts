@@ -1,8 +1,7 @@
 import type { OnNodesChange } from "reactflow"
-import type { NodeOptionsType } from "./constants"
 import type { INode, INodeData, INodeOptions, INodeStyle } from "./type"
 
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useMemo, useRef, useState } from "react"
 import { useNodesState, useOnSelectionChange, useStoreApi } from "reactflow"
 import { merge } from "lodash"
 
@@ -45,7 +44,7 @@ export function useNodes(): NodesHookReturn {
 
   useOnSelectionChange({
     onChange({ nodes }) {
-      setSelectedNodes(new Map(nodes.filter(({ selected }) => selected).map((node) => [node.id, node])))
+      setSelectedNodes(new Map(nodes.map((node) => [node.id, store.getState().nodeInternals.get(node.id)!])))
     }
   })
   const removeSelectedNode = useCallback(() => {
@@ -70,12 +69,15 @@ export function useNodes(): NodesHookReturn {
 
   const setSelectedNodeStyle = (nodeStyle: INodeStyle) => {
     if (!selectedNodes.size) return
+    const nodeInternals = new Map(store.getState().nodeInternals)
     setNodes(nodes.map((node) => {
       if (selectedNodes.has(node.id)) {
         node.data = { ...node.data, style: { ...nodeStyle } }
+        nodeInternals.get(node.id)!.data = node.data
       }
       return node
     }))
+    store.setState({ nodeInternals })
   }
 
   const setNodesStyle = (nodeStyle: INodeStyle) => {
@@ -103,16 +105,15 @@ export type UpdateNodeOptionsParams = Partial<{
   border: Partial<INodeOptions['border']>
   label: Partial<INodeOptions['label']>
 } & Omit<INodeOptions, "border" | "label">>
-export function useNodeOptions(defaultStyle: INodeStyle, type: NodeOptionsType) {
+export function useNodeOptions(defaultStyle: INodeStyle) {
   const [nodeStyleOptions, setNodeStyleOptions, reset] = useImmerState<INodeOptions>(() => nodeStyle2Options(defaultStyle))
 
-  useLayoutEffect(() => {
-    console.log(defaultStyle)
-    reset(nodeStyle2Options(defaultStyle))
-  }, [type])
 
   return {
     nodeStyleOptions,
+    reset() {
+      reset(nodeStyle2Options(defaultStyle))
+    },
     setNodeStyleOptions(nodeOptions: UpdateNodeOptionsParams) {
       return nodeOptions2Style(setNodeStyleOptions((state) => {
         merge(state, nodeOptions)
